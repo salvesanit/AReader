@@ -1,0 +1,421 @@
+/* ============================================================
+   Opening book — plays when "Read the book" is pressed.
+   A closed volume rises, the cover swings open on its spine,
+   two leaves turn, and the camera dives into the first page.
+   ============================================================ */
+
+.ob {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  cursor: default;
+}
+
+.ob-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 75% at 50% 46%,
+    #1f3fb0 0%,
+    #162c7c 48%,
+    #0a1330 100%
+  );
+}
+
+.ob > .grain {
+  z-index: 1;
+}
+
+.ob-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  z-index: 3;
+  text-align: center;
+  color: #edebe6;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ---------- 3D rig ---------- */
+.ob-persp {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  perspective: 3000px;
+  perspective-origin: 50% 50%;
+}
+
+.ob-center,
+.ob-zoom {
+  position: absolute;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.ob-center {
+  left: 50%;
+  top: 50%;
+}
+
+.ob-zoom {
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.ob-book {
+  position: absolute;
+  left: 0;
+  top: calc(var(--bh) / -2);
+  width: var(--bw);
+  height: var(--bh);
+  transform-style: preserve-3d;
+  transform-origin: 0 50%;
+  will-change: transform;
+}
+
+/* soft floor shadow, scaled out as the book opens */
+.ob-shadow {
+  position: absolute;
+  left: -100%;
+  top: 0;
+  width: 200%;
+  height: 100%;
+  background: #000;
+  border-radius: 6px;
+  filter: blur(calc(var(--bw) * 0.07));
+  transform-origin: 100% 50%;
+  opacity: 0;
+}
+
+/* back board — also the lip that frames the pages */
+.ob-back {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(calc(var(--bt) * -1));
+  background: var(--spine);
+  border-radius: 1px;
+}
+
+/* fore-edge of the page block — only drawn when the angled book shows it */
+.ob-edge {
+  position: absolute;
+  top: calc(var(--bh) * 0.012);
+  height: calc(var(--bh) * 0.976);
+  left: calc(var(--bw) * 0.978);
+  width: calc(var(--bt) - 6px);
+  transform-origin: 0 50%;
+  transform: translateZ(-6px) rotateY(90deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: repeating-linear-gradient(90deg, #f4f1ea 0 1.5px, #cdc7b9 1.5px 2.5px);
+}
+
+/* cloth spine, seen while the closed book is angled */
+.ob-spine {
+  position: absolute;
+  top: 0;
+  left: calc(var(--bt) * -1);
+  width: var(--bt);
+  height: 100%;
+  transform-origin: 100% 50%;
+  transform: rotateY(-90deg);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.38) 0%,
+      rgba(255, 255, 255, 0.08) 42%,
+      rgba(0, 0, 0, 0.3) 100%
+    ),
+    var(--spine);
+  color: var(--spine-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ob-spine span {
+  writing-mode: vertical-rl;
+  font-family: var(--serif);
+  font-size: calc(var(--bt) * 0.44);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  max-height: 84%;
+  overflow: hidden;
+}
+
+/* ---------- pages ---------- */
+.ob-page,
+.ob-flip.leaf {
+  top: calc(var(--bh) * 0.012);
+  bottom: calc(var(--bh) * 0.012);
+  right: calc(var(--bw) * 0.022);
+}
+
+.ob-page {
+  position: absolute;
+  left: 0;
+  transform: translateZ(-6px);
+  background: var(--pg);
+  overflow: hidden;
+}
+
+.ob-flip {
+  position: absolute;
+  left: 0;
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+}
+
+.ob-flip.cover {
+  top: 0;
+  bottom: 0;
+  right: 0;
+}
+
+.ob-flip.l1 {
+  transform: translateZ(-2px);
+}
+
+.ob-flip.l2 {
+  transform: translateZ(-4px);
+}
+
+.ob-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.ob-face.back {
+  transform: rotateY(180deg);
+}
+
+.ob-pg {
+  background: var(--pg);
+  color: var(--pg-ink);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* shading that dims a face as it turns away from the light */
+.ob-sh {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* the dark fold where a page meets the spine */
+.ob-gut {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0) 10%);
+}
+
+/* back faces are mirrored by their own flip, so the fold sits on the right edge */
+.ob-face.back .ob-gut {
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0) 10%);
+}
+
+/* ---------- front cover (same artwork as the shelf cover) ---------- */
+.ob-cv .ob-in {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--bw) * 0.075);
+  background: var(--sheet);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(20, 20, 20, 0.3);
+}
+
+.ob-hinge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8%;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0)),
+    linear-gradient(90deg, transparent 52%, rgba(20, 20, 20, 0.2) 52% 56%, rgba(255, 255, 255, 0.45) 56% 60%, transparent 60%);
+}
+
+.ob-auth {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: calc(var(--bw) * 0.04);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cobalt);
+  text-align: center;
+}
+
+.ob-ttl {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: calc(var(--bw) * 0.118);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin-top: calc(var(--bw) * 0.04);
+}
+
+.ob-rule {
+  height: 1px;
+  background: var(--rule);
+  margin: calc(var(--bw) * 0.045) 0 calc(var(--bw) * 0.04);
+}
+
+.ob-art {
+  flex: 1;
+  min-height: 0;
+  background-size: cover;
+  background-position: center;
+  background-color: #e3e0d8;
+  position: relative;
+  overflow: hidden;
+}
+
+.ob-art.type {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(135deg, rgba(20, 20, 20, 0.05) 0 6px, transparent 6px 12px),
+    var(--art-bg, #e6e2d9);
+}
+
+.ob-art.type span {
+  font-family: var(--serif);
+  font-size: calc(var(--bw) * 0.5);
+  line-height: 1;
+  color: var(--art-ink, #1f3fb0);
+  opacity: 0.9;
+}
+
+.ob-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: calc(var(--bw) * 0.04);
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: calc(var(--bw) * 0.035);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ob-foot > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ob-foot .vhs {
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 3px 5px 2px;
+  line-height: 1;
+  font-size: calc(var(--bw) * 0.034);
+}
+
+/* ---------- inside of the cover: pasted endpaper ---------- */
+.ob-end {
+  background: color-mix(in srgb, var(--spine) 20%, #ece5d4);
+}
+
+.ob-end::before {
+  content: "";
+  position: absolute;
+  inset: 3.5%;
+  border: 1px solid color-mix(in srgb, var(--spine) 45%, transparent);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--spine) 14%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+/* ---------- printed pages ---------- */
+.ob-center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: calc(var(--bw) * 0.035);
+  padding: 0 12%;
+}
+
+.ob-center-text .a {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: calc(var(--bw) * 0.03);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cobalt);
+}
+
+.ob-center-text .t {
+  font-family: var(--serif);
+  font-size: calc(var(--bw) * 0.1);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.ob-center-text .t.small {
+  font-size: calc(var(--bw) * 0.062);
+  opacity: 0.8;
+}
+
+.ob-center-text .r {
+  width: 26%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
+}
+
+.ob-center-text .e {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: calc(var(--bw) * 0.026);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* logo-ja class removed — no longer used */
+
+/* The first chapter page — laid out at real reader size, then scaled down.
+   When the camera zooms in, it lands exactly on what the reader shows. */
+.ob-pi {
+  position: absolute;
+  top: 0;
+  transform-origin: 0 0;
+  background: var(--r-bg);
+  color: var(--r-ink);
+  overflow: hidden;
+}

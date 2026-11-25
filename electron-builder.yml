@@ -1,0 +1,20 @@
+appId: com.sanit.areader
+productName: AReader
+artifactName: AReader-${version}-Windows-${arch}.${ext}
+directories:
+  output: release
+files:
+  - dist/**
+  - electron/**
+  - package.json
+extraMetadata:
+  main: electron/main.cjs
+asar: true
+npmRebuild: false
+compression: store
+win:
+  target:
+    - portable
+  signAndEditExecutable: false
+portable:
+  artifactName: AReader-${version}-Windows-Portable.${ext}

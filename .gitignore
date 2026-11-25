@@ -1,0 +1,108 @@
+# Dependencies
+node_modules/
+jspm_packages/
+bower_components/
+
+# Build output
+dist/
+dist-electron/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.cache/
+.vite/
+
+# Electron builds
+release/
+win-unpacked/
+linux-unpacked/
+mac-unpacked/
+electron-dist/
+*.exe
+*.msi
+*.dmg
+*.app
+*.asar
+*.blockmap
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+secrets/
+credentials.json
+service-account.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# IDE and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating system
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Thumbs.db:encryptable
+desktop.ini
+
+# Temporary files
+tmp/
+temp/
+.temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*.old
+
+# Cache
+.eslintcache
+.stylelintcache
+npm-cache/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Certificates and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Debug
+*.stackdump
+
+# Package manager
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
